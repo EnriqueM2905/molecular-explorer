@@ -1,184 +1,248 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Molecular Explorer</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Molecular Explorer 🔬</title>
+
+  <!-- Estilo moderno -->
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      background: linear-gradient(135deg, #0b132b, #1c2541, #3a506b);
+      background-size: 300% 300%;
+      animation: gradientMove 12s ease infinite;
+    }
+    @keyframes gradientMove {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 10px;
+      background: rgba(0,0,0,0.4);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    nav {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    nav a {
+      color: #f5f5f5;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      border-bottom: 2px solid transparent;
+    }
+
+    nav a:hover {
+      border-bottom: 2px solid #00b4d8;
+    }
+
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      width: 350px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card h2 {
+      text-align: center;
+      color: #90e0ef;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      border-radius: 10px;
+      border: none;
+      padding: 10px;
+      font-family: monospace;
+      resize: none;
+    }
+
+    button {
+      background: #00b4d8;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #0077b6;
+    }
+
+    img.explain {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+      border: 2px solid #90e0ef;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    input[type=text] {
+      width: 90%;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 5px;
+      font-size: 1rem;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-  <header class="bg-green-600 text-white py-4 shadow">
-    <h1 class="text-2xl font-bold text-center">🧬 Molecular Explorer</h1>
-    <p class="text-center text-sm mt-1">Herramienta interactiva para análisis básico de secuencias de ADN</p>
+<body>
+  <header>
+    <h1>🧬 Molecular Explorer</h1>
+    <p>Una herramienta interactiva para analizar secuencias de ADN y proteínas.</p>
   </header>
 
-  <main class="max-w-5xl mx-auto p-6 space-y-8">
-    <section class="bg-white p-5 rounded-2xl shadow">
-      <h2 class="text-xl font-semibold mb-3">Ingresar secuencia de ADN</h2>
-      <textarea id="dnaInput" rows="5" class="w-full p-2 border rounded" placeholder="Ejemplo: ATGGCTGCTTTTCTTCTTCTCTCTGTTGTTGCTGCT..."></textarea>
-      <p class="text-sm text-gray-500 mt-1">Ingresa una secuencia de ADN (solo letras A, T, G, C).</p>
-    </section>
+  <nav>
+    <a href="#analisis">Análisis ADN</a>
+    <a href="#busqueda">Buscar secuencias</a>
+    <a href="#info">Acerca de</a>
+  </nav>
 
-    <!-- Opciones de análisis -->
-    <section class="bg-white p-5 rounded-2xl shadow">
-      <h2 class="text-xl font-semibold mb-4">Opciones de análisis</h2>
+  <main id="analisis">
+    <div class="card">
+      <h2>1️⃣ Generar Reverse Complement</h2>
+      <p>Obtén la secuencia inversa y complementaria del ADN (A↔T, G↔C).</p>
+      <textarea id="seq" placeholder="Escribe tu secuencia aquí..."></textarea>
+      <button onclick="reverseComplement()">Generar</button>
+      <p id="revcomp" style="word-break: break-word;"></p>
+      <img src="https://i.imgur.com/KjMwnrA.png" class="explain" alt="Ejemplo reverse complement">
+    </div>
 
-      <!-- Reverse complement -->
-      <div class="mb-6">
-        <button id="revCompBtn" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded">Generar reverse complement</button>
-        <button id="helpRevBtn" title="Ver imagen explicativa" class="px-2 py-1 ml-2 bg-gray-200 rounded">📷</button>
-        <div class="text-sm text-gray-600 mt-1">
-          Crea la hebra complementaria y la invierte (útil para analizar la cadena opuesta del ADN).
-        </div>
-        <pre id="revOut" class="p-2 mt-2 bg-gray-50 border rounded overflow-auto max-h-32"></pre>
-      </div>
+    <div class="card">
+      <h2>2️⃣ Traducir a Proteína</h2>
+      <p>Convierte tu secuencia de ADN en una secuencia de aminoácidos (usando el código genético estándar).</p>
+      <textarea id="protseq" placeholder="Escribe secuencia de ADN..."></textarea>
+      <button onclick="translateDNA()">Traducir</button>
+      <p id="protein" style="word-break: break-word;"></p>
+      <img src="https://i.imgur.com/UKSK1Wx.png" class="explain" alt="Ejemplo traducción a proteína">
+    </div>
 
-      <!-- Contenido GC -->
-      <div class="mb-6">
-        <button id="gcBtn" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded">Calcular GC%</button>
-        <div class="text-sm text-gray-600 mt-1">Calcula el porcentaje de Guanina (G) y Citosina (C) en la secuencia.</div>
-        <div id="gcOut" class="mt-2 font-mono text-blue-700"></div>
-      </div>
+    <div class="card">
+      <h2>3️⃣ Calcular GC%</h2>
+      <p>Calcula el porcentaje de bases G y C, útil para determinar estabilidad genética y origen evolutivo.</p>
+      <textarea id="gcseq" placeholder="Escribe secuencia de ADN..."></textarea>
+      <button onclick="calcGC()">Calcular</button>
+      <p id="gccontent"></p>
+      <img src="https://i.imgur.com/0T5ML2C.png" class="explain" alt="Ejemplo cálculo GC%">
+    </div>
 
-      <!-- Traducción -->
-      <div>
-        <button id="translateBtn" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded">Traducir (proteína)</button>
-        <div class="text-sm text-gray-600 mt-1">
-          Traduce el ADN a proteína en los tres marcos de lectura. Usa la opción para detener en el primer codón STOP.
-        </div>
-
-        <div class="mt-2 flex items-center gap-3">
-          <input id="untilStopChk" type="checkbox">
-          <label for="untilStopChk" class="text-sm">Traducir hasta primer STOP (ORF)</label>
-          <select id="stopSymbolSelect" class="p-1 border rounded text-sm">
-            <option value="*">Mostrar '*'</option>
-            <option value="[STOP]">Mostrar '[STOP]'</option>
-            <option value="">Ocultar STOP</option>
-          </select>
-        </div>
-
-        <div class="mt-3 grid md:grid-cols-3 gap-3">
-          <div>
-            <div class="text-xs text-gray-500">Frame 1 (offset 0)</div>
-            <pre id="transOut1" class="p-2 bg-gray-50 border rounded overflow-auto max-h-32">—</pre>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500">Frame 2 (offset 1)</div>
-            <pre id="transOut2" class="p-2 bg-gray-50 border rounded overflow-auto max-h-32">—</pre>
-          </div>
-          <div>
-            <div class="text-xs text-gray-500">Frame 3 (offset 2)</div>
-            <pre id="transOut3" class="p-2 bg-gray-50 border rounded overflow-auto max-h-32">—</pre>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="card" id="busqueda">
+      <h2>4️⃣ Buscar secuencia en NCBI</h2>
+      <p>Busca genes o secuencias reales (usa nombres como “GBSS potato” o “NPR1 Solanum”).</p>
+      <input type="text" id="searchTerm" placeholder="Ejemplo: GBSS Solanum tuberosum" />
+      <button onclick="searchNCBI()">Buscar</button>
+      <div id="searchResults"></div>
+    </div>
   </main>
 
-  <!-- Modal explicativo reverse complement -->
-  <div id="modalRev" class="fixed inset-0 bg-black/50 hidden items-center justify-center">
-    <div class="bg-white p-4 rounded-xl max-w-3xl w-full">
-      <div class="flex justify-between items-center">
-        <h3 class="font-semibold text-lg">Reverse complement — explicación</h3>
-        <button id="closeModalRev" class="text-red-600 font-bold">✖</button>
-      </div>
-      <img src="assets/images/reverse_complement.png" alt="Reverse complement" class="mt-4 rounded border w-full" />
-      <p class="text-sm text-gray-600 mt-2">La cadena complementaria se forma cambiando A↔T y G↔C, luego se invierte la dirección (5'→3').</p>
-    </div>
-  </div>
-
-  <footer class="text-center text-gray-600 text-sm mt-10 mb-4">
-    © 2025 Molecular Explorer — Desarrollado por Carlos Flores
+  <footer id="info">
+    <p>Desarrollado por Carlos Flores © 2025 | Proyecto educativo de Biología Molecular.</p>
   </footer>
 
+  <!-- Scripts -->
   <script>
-    const dnaInput = document.getElementById('dnaInput');
-    const revOut = document.getElementById('revOut');
-    const gcOut = document.getElementById('gcOut');
-    const transOut1 = document.getElementById('transOut1');
-    const transOut2 = document.getElementById('transOut2');
-    const transOut3 = document.getElementById('transOut3');
-    const untilStopChk = document.getElementById('untilStopChk');
-    const stopSymbolSelect = document.getElementById('stopSymbolSelect');
+    // --- Función 1: Reverse Complement ---
+    function reverseComplement() {
+      const seq = document.getElementById("seq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      const comp = {A:"T", T:"A", G:"C", C:"G"};
+      const revcomp = seq.split("").reverse().map(b => comp[b] || "").join("");
+      document.getElementById("revcomp").textContent = revcomp || "Secuencia no válida.";
+    }
 
-    // --- Función para limpiar secuencia ---
-    const cleanSeq = s => s.toUpperCase().replace(/[^ATGCUN]/g, '').replace(/U/g, 'T');
-
-    // --- Reverse Complement ---
-    document.getElementById('revCompBtn').addEventListener('click', () => {
-      const seq = cleanSeq(dnaInput.value);
-      const comp = seq.split('').map(b => ({A:'T',T:'A',G:'C',C:'G'})[b] || '').reverse().join('');
-      revOut.textContent = comp || '—';
-    });
-
-    // --- GC Content ---
-    document.getElementById('gcBtn').addEventListener('click', () => {
-      const seq = cleanSeq(dnaInput.value);
-      const gc = (seq.match(/[GC]/g) || []).length;
-      const percent = seq.length ? ((gc / seq.length) * 100).toFixed(2) : 0;
-      gcOut.textContent = `Contenido GC: ${percent}%`;
-    });
-
-    // --- Codon map ---
-    const codonMap = {
-      'TTT':'F','TTC':'F','TTA':'L','TTG':'L','CTT':'L','CTC':'L','CTA':'L','CTG':'L',
-      'ATT':'I','ATC':'I','ATA':'I','ATG':'M','GTT':'V','GTC':'V','GTA':'V','GTG':'V',
-      'TCT':'S','TCC':'S','TCA':'S','TCG':'S','CCT':'P','CCC':'P','CCA':'P','CCG':'P',
-      'ACT':'T','ACC':'T','ACA':'T','ACG':'T','GCT':'A','GCC':'A','GCA':'A','GCG':'A',
-      'TAT':'Y','TAC':'Y','TAA':'*','TAG':'*','CAT':'H','CAC':'H','CAA':'Q','CAG':'Q',
-      'AAT':'N','AAC':'N','AAA':'K','AAG':'K','GAT':'D','GAC':'D','GAA':'E','GAG':'E',
-      'TGT':'C','TGC':'C','TGA':'*','TGG':'W','CGT':'R','CGC':'R','CGA':'R','CGG':'R',
-      'AGT':'S','AGC':'S','AGA':'R','AGG':'R','GGT':'G','GGC':'G','GGA':'G','GGG':'G'
+    // --- Función 2: Traducción de ADN a proteína ---
+    const codonTable = {
+      TTT:'F', TTC:'F', TTA:'L', TTG:'L',
+      CTT:'L', CTC:'L', CTA:'L', CTG:'L',
+      ATT:'I', ATC:'I', ATA:'I', ATG:'M',
+      GTT:'V', GTC:'V', GTA:'V', GTG:'V',
+      TCT:'S', TCC:'S', TCA:'S', TCG:'S',
+      CCT:'P', CCC:'P', CCA:'P', CCG:'P',
+      ACT:'T', ACC:'T', ACA:'T', ACG:'T',
+      GCT:'A', GCC:'A', GCA:'A', GCG:'A',
+      TAT:'Y', TAC:'Y', TAA:'*', TAG:'*',
+      CAT:'H', CAC:'H', CAA:'Q', CAG:'Q',
+      AAT:'N', AAC:'N', AAA:'K', AAG:'K',
+      GAT:'D', GAC:'D', GAA:'E', GAG:'E',
+      TGT:'C', TGC:'C', TGA:'*', TGG:'W',
+      CGT:'R', CGC:'R', CGA:'R', CGG:'R',
+      AGT:'S', AGC:'S', AGA:'R', AGG:'R',
+      GGT:'G', GGC:'G', GGA:'G', GGG:'G'
     };
 
-    function translateFrame(seq, frame=0, options={untilStop:false, stopSymbol:'*'}) {
-      const s = cleanSeq(seq).slice(frame);
-      let aa = '';
-      for (let i=0; i+2 < s.length; i+=3) {
-        const cod = s.slice(i,i+3);
-        const mer = codonMap[cod] || 'X';
-        if (mer === '*') {
-          if (options.untilStop) return aa;
-          aa += (options.stopSymbol === '' ? '' : options.stopSymbol);
-        } else {
-          aa += mer;
-        }
+    function translateDNA() {
+      const seq = document.getElementById("protseq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      let protein = "";
+      for (let i = 0; i < seq.length - 2; i += 3) {
+        let codon = seq.substring(i, i + 3);
+        protein += codonTable[codon] || "";
       }
-      return aa;
+      // Mejorar visualmente: eliminar codones incompletos
+      document.getElementById("protein").textContent = protein || "Secuencia no válida.";
     }
 
-    function translateAllFrames(seq, options={untilStop:false, stopSymbol:'*'}) {
-      return [
-        translateFrame(seq, 0, options),
-        translateFrame(seq, 1, options),
-        translateFrame(seq, 2, options)
-      ];
+    // --- Función 3: Calcular contenido GC ---
+    function calcGC() {
+      const seq = document.getElementById("gcseq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      if (seq.length === 0) {
+        document.getElementById("gccontent").textContent = "Por favor ingresa una secuencia válida.";
+        return;
+      }
+      const gcCount = (seq.match(/[GC]/g) || []).length;
+      const gcPercent = ((gcCount / seq.length) * 100).toFixed(2);
+      document.getElementById("gccontent").textContent = `Contenido GC: ${gcPercent}%`;
     }
 
-    function updateTranslations() {
-      const seq = dnaInput.value;
-      const opts = { untilStop: untilStopChk.checked, stopSymbol: stopSymbolSelect.value };
-      const [f1,f2,f3] = translateAllFrames(seq, opts);
-      transOut1.textContent = f1 || '—';
-      transOut2.textContent = f2 || '—';
-      transOut3.textContent = f3 || '—';
+    // --- Función 4: Buscar secuencias reales (enlace a NCBI) ---
+    function searchNCBI() {
+      const term = document.getElementById("searchTerm").value.trim();
+      if (!term) {
+        document.getElementById("searchResults").innerHTML = "<p>Ingresa un nombre de gen o especie.</p>";
+        return;
+      }
+      const url = `https://www.ncbi.nlm.nih.gov/search/all/?term=${encodeURIComponent(term)}`;
+      document.getElementById("searchResults").innerHTML = `<p>Buscar en NCBI: <a href="${url}" target="_blank">${url}</a></p>`;
     }
-
-    document.getElementById('translateBtn').addEventListener('click', updateTranslations);
-    untilStopChk.addEventListener('change', updateTranslations);
-    stopSymbolSelect.addEventListener('change', updateTranslations);
-
-    // --- Modal ---
-    document.getElementById('helpRevBtn').addEventListener('click', () => {
-      const modal = document.getElementById('modalRev');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    });
-    document.getElementById('closeModalRev').addEventListener('click', () => {
-      const modal = document.getElementById('modalRev');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    });
   </script>
 </body>
 </html>
