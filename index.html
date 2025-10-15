@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Molecular Explorer — Página de Biología Molecular</title>
+  <!-- Tailwind CDN (rápido para prototipos; sin compilación) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Pequeñas mejoras visuales */
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
+    .chip { @apply inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 border border-gray-200; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-4xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold">Molecular Explorer</h1>
+      <p class="mt-1 text-sm text-gray-600">Herramienta interactiva en una sola página para explorar secuencias de ADN/RNA — diseñada para estudiantes de biología molecular.</p>
+    </header>
+
+    <main class="grid gap-6 md:grid-cols-2">
+      <!-- Input -->
+      <section class="bg-white p-4 rounded-lg shadow-sm">
+        <h2 class="font-semibold">1. Inserta tu secuencia</h2>
+        <textarea id="seqInput" rows="6" class="w-full mt-2 p-2 border rounded mono" placeholder="Pega aquí una secuencia de ADN (ATGC)." spellcheck="false"></textarea>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button id="cleanBtn" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300">Limpiar</button>
+          <button id="formatBtn" class="px-3 py-2 rounded bg-blue-500 text-white hover:opacity-90">Formatear (upper / remove spaces)</button>
+          <button id="revCompBtn" class="px-3 py-2 rounded bg-green-500 text-white">Generar reverse complement</button>
+          <button id="translateBtn" class="px-3 py-2 rounded bg-indigo-600 text-white">Traducir (proteína)</button>
+          <button id="orfsBtn" class="px-3 py-2 rounded bg-yellow-500 text-white">Buscar ORFs</button>
+          <button id="gcBtn" class="px-3 py-2 rounded bg-pink-500 text-white">Calcular GC%</button>
+          <button id="downloadFastaBtn" class="px-3 py-2 rounded bg-gray-800 text-white">Descargar FASTA</button>
+        </div>
+
+        <div class="mt-3 text-xs text-gray-500">Soporta ADN (A,T,G,C). Si pegas ARN (U), usa el botón Formatear para reemplazar U → T.</div>
+      </section>
+
+      <!-- Output -->
+      <section class="bg-white p-4 rounded-lg shadow-sm">
+        <h2 class="font-semibold">2. Resultados</h2>
+
+        <div class="mt-3">
+          <div class="chip">GC: <span id="gcVal" class="ml-2 mono">—</span></div>
+        </div>
+
+        <div class="mt-3">
+          <h3 class="font-medium">Reverse Complement</h3>
+          <pre id="revCompOut" class="mono p-2 bg-gray-50 rounded border mt-1 max-h-28 overflow-auto">—</pre>
+        </div>
+
+        <div class="mt-3">
+          <h3 class="font-medium">Traducción (frame 1)</h3>
+          <pre id="transOut" class="mono p-2 bg-gray-50 rounded border mt-1 max-h-36 overflow-auto">—</pre>
+        </div>
+
+        <div class="mt-3">
+          <h3 class="font-medium">ORFs encontradas</h3>
+          <div id="orfsOut" class="mt-1 space-y-2 text-sm"></div>
+        </div>
+
+        <details class="mt-4">
+          <summary class="cursor-pointer">Tabla de codones (ver)</summary>
+          <pre id="codonTable" class="mono p-2 bg-gray-50 rounded border mt-2 max-h-48 overflow-auto"></pre>
+        </details>
+      </section>
+
+      <!-- Extras / Tools -->
+      <section class="bg-white p-4 rounded-lg shadow-sm md:col-span-2">
+        <h2 class="font-semibold">Herramientas adicionales</h2>
+        <div class="grid gap-3 md:grid-cols-3 mt-3">
+          <div>
+            <label class="text-sm">Generar secuencia aleatoria</label>
+            <div class="mt-2 flex gap-2">
+              <input id="randLen" type="number" min="1" value="60" class="w-20 p-1 border rounded" />
+              <button id="genRandBtn" class="px-3 py-2 rounded bg-violet-600 text-white">Generar</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-sm">Buscar motivo (regex)</label>
+            <div class="mt-2 flex gap-2">
+              <input id="motifInput" class="p-1 border rounded mono" placeholder="p.ej. ATG|TATA" />
+              <button id="findMotifBtn" class="px-3 py-2 rounded bg-emerald-600 text-white">Buscar</button>
+            </div>
+            <div id="motifOut" class="mt-2 text-sm text-gray-600"></div>
+          </div>
+
+          <div>
+            <label class="text-sm">Copiar resultados</label>
+            <div class="mt-2 flex gap-2">
+              <button id="copyAllBtn" class="px-3 py-2 rounded bg-slate-600 text-white">Copiar todo</button>
+              <button id="clearResultsBtn" class="px-3 py-2 rounded bg-gray-200">Limpiar resultados</button>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-4" />
+        <p class="text-sm text-gray-600">Consejos: puedes usar esta página para practicar traducir genes hipotéticos, verificar GC antes de diseñar primers, o enseñar conceptos en clase. Todo funciona en tu navegador — no envía datos a servidores externos.</p>
+      </section>
+    </main>
+
+    <footer class="mt-6 text-sm text-gray-500">Hecho para estudiantes • Guardar como <span class="mono">index.html</span> en tu repositorio de GitHub para publicar con GitHub Pages.</footer>
+  </div>
+
+  <script>
+    // --- Utilities ---
+    const cleanSeq = s => s.toUpperCase().replace(/[^ATGCUNatgcun]/g, '').replace(/U/g,'T');
+
+    const complement = {
+      'A':'T','T':'A','G':'C','C':'G','N':'N'
+    };
+
+    function revComp(s){
+      const u = cleanSeq(s);
+      return u.split('').reverse().map(c=>complement[c]||'N').join('');
+    }
+
+    function gcPercent(s){
+      const u = cleanSeq(s);
+      if(!u.length) return 0;
+      const g = (u.match(/G/g)||[]).length;
+      const c = (u.match(/C/g)||[]).length;
+      return ((g+c)/u.length*100).toFixed(2);
+    }
+
+    // Codon table (standard)
+    const codonMap = {
+      'TTT':'F','TTC':'F','TTA':'L','TTG':'L','CTT':'L','CTC':'L','CTA':'L','CTG':'L',
+      'ATT':'I','ATC':'I','ATA':'I','ATG':'M','GTT':'V','GTC':'V','GTA':'V','GTG':'V',
+      'TCT':'S','TCC':'S','TCA':'S','TCG':'S','CCT':'P','CCC':'P','CCA':'P','CCG':'P',
+      'ACT':'T','ACC':'T','ACA':'T','ACG':'T','GCT':'A','GCC':'A','GCA':'A','GCG':'A',
+      'TAT':'Y','TAC':'Y','TAA':'*','TAG':'*','CAT':'H','CAC':'H','CAA':'Q','CAG':'Q',
+      'AAT':'N','AAC':'N','AAA':'K','AAG':'K','GAT':'D','GAC':'D','GAA':'E','GAG':'E',
+      'TGT':'C','TGC':'C','TGA':'*','TGG':'W','CGT':'R','CGC':'R','CGA':'R','CGG':'R',
+      'AGT':'S','AGC':'S','AGA':'R','AGG':'R','GGT':'G','GGC':'G','GGA':'G','GGG':'G'
+    };
+
+    function translateFrame(seq, frame=0){
+      const s = cleanSeq(seq).slice(frame);
+      const aa = [];
+      for(let i=0;i+2<s.length;i+=3){
+        const codon = s.slice(i,i+3);
+        aa.push(codonMap[codon]||'X');
+      }
+      return aa.join('');
+    }
+
+    function findORFs(seq){
+      const s = cleanSeq(seq);
+      const orfs = [];
+      const stops = ['TAA','TAG','TGA'];
+      for(let frame=0; frame<3; frame++){
+        for(let i=frame;i+2<s.length;i+=3){
+          const cod = s.slice(i,i+3);
+          if(cod==='ATG'){
+            // search stop
+            for(let j=i+3;j+2<s.length;j+=3){
+              const stop = s.slice(j,j+3);
+              if(stops.includes(stop)){
+                const dna = s.slice(i,j+3);
+                orfs.push({frame:frame+1,start:i+1,end:j+3,length:dna.length,protein:translateFrame(dna,0)});
+                break;
+              }
+            }
+          }
+        }
+      }
+      return orfs;
+    }
+
+    // --- UI wiring ---
+    const seqInput = document.getElementById('seqInput');
+    const revCompOut = document.getElementById('revCompOut');
+    const transOut = document.getElementById('transOut');
+    const gcVal = document.getElementById('gcVal');
+    const orfsOut = document.getElementById('orfsOut');
+    const codonTable = document.getElementById('codonTable');
+
+    document.getElementById('formatBtn').onclick = ()=>{
+      seqInput.value = cleanSeq(seqInput.value);
+      updateAll();
+    }
+    document.getElementById('cleanBtn').onclick = ()=>{ seqInput.value=''; updateAll(); }
+    document.getElementById('revCompBtn').onclick = ()=>{ revCompOut.textContent = revComp(seqInput.value) || '—'; }
+    document.getElementById('gcBtn').onclick = ()=>{ gcVal.textContent = gcPercent(seqInput.value) + '%'; }
+    document.getElementById('translateBtn').onclick = ()=>{ transOut.textContent = translateFrame(seqInput.value,0) || '—'; }
+    document.getElementById('orfsBtn').onclick = ()=>{
+      const orfs = findORFs(seqInput.value);
+      orfsOut.innerHTML = '';
+      if(!orfs.length) orfsOut.textContent = 'No se encontraron ORFs que empiecen en ATG y terminen en un codón stop.';
+      else{
+        orfs.slice(0,20).forEach(o=>{
+          const el = document.createElement('div');
+          el.className='p-2 border rounded bg-gray-50';
+          el.innerHTML = `<div class="text-sm font-medium">Frame ${o.frame} — start:${o.start} end:${o.end} len:${o.length}</div><div class="mono text-xs mt-1">Protein: ${o.protein}</div>`;
+          orfsOut.appendChild(el);
+        });
+      }
+    }
+
+    document.getElementById('downloadFastaBtn').onclick = ()=>{
+      const seq = cleanSeq(seqInput.value);
+      if(!seq) return alert('Secuencia vacía');
+      const name = prompt('Nombre para FASTA (p.ej. geneX)', 'sequence1') || 'sequence1';
+      const fasta = `>${name}\n${seq.match(/.{1,80}/g).join('\n')}\n`;
+      const blob = new Blob([fasta],{type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name + '.fasta'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    // extras
+    document.getElementById('genRandBtn').onclick = ()=>{
+      const n = Math.max(1, parseInt(document.getElementById('randLen').value||60));
+      const bases = ['A','T','G','C'];
+      let s=''; for(let i=0;i<n;i++) s+=bases[Math.floor(Math.random()*4)];
+      seqInput.value = s; updateAll();
+    }
+
+    document.getElementById('findMotifBtn').onclick = ()=>{
+      const motif = document.getElementById('motifInput').value.trim();
+      const out = document.getElementById('motifOut');
+      const s = cleanSeq(seqInput.value);
+      if(!motif) return out.textContent='Ingresa un patrón (p.ej. ATG|TATA)';
+      try{
+        const re = new RegExp(motif,'g');
+        const matches = [];
+        let m;
+        while((m=re.exec(s))!==null){ matches.push({idx:m.index+1,match:m[0]}); if(re.lastIndex===m.index) re.lastIndex++; }
+        if(!matches.length) out.textContent='No se encontraron coincidencias.';
+        else out.innerHTML = matches.slice(0,50).map(x=>`pos:${x.idx} \u00B7 ${x.match}`).join('<br>');
+      }catch(e){ out.textContent='Expresión regular inválida'; }
+    }
+
+    document.getElementById('copyAllBtn').onclick = async ()=>{
+      const all = [`Sequence:\n${seqInput.value}`,`Reverse complement:\n${revCompOut.textContent}`,`Protein:\n${transOut.textContent}`].join('\n\n');
+      try{ await navigator.clipboard.writeText(all); alert('Copiado al portapapeles'); }catch(e){ alert('No se pudo copiar: ' + e.message); }
+    }
+    document.getElementById('clearResultsBtn').onclick = ()=>{ revCompOut.textContent='—'; transOut.textContent='—'; orfsOut.innerHTML=''; gcVal.textContent='—'; document.getElementById('motifOut').textContent=''; }
+
+    function updateAll(){
+      revCompOut.textContent = revComp(seqInput.value) || '—';
+      transOut.textContent = translateFrame(seqInput.value,0) || '—';
+      gcVal.textContent = gcPercent(seqInput.value) + '%';
+    }
+
+    // Populate codon table for display
+    function showCodonTable(){
+      const lines = [];
+      const keys = Object.keys(codonMap).sort();
+      for(const k of keys) lines.push(`${k} → ${codonMap[k]}`);
+      codonTable.textContent = lines.join('\n');
+    }
+    showCodonTable();
+
+    // initial
+    updateAll();
+  </script>
+</body>
+</html>
