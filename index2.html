@@ -1,254 +1,248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Molecular Explorer — Visor 3D de proteína</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- NGL Viewer (CDN) -->
-  <script src="https://unpkg.com/ngl@0.10.4/dist/ngl.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Molecular Explorer 🔬</title>
+
+  <!-- Estilo moderno -->
   <style>
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; }
-    #viewport { width: 100%; height: 520px; border-radius: 8px; border: 1px solid #e5e7eb; }
-    .small { font-size: 0.85rem; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      background: linear-gradient(135deg, #0b132b, #1c2541, #3a506b);
+      background-size: 300% 300%;
+      animation: gradientMove 12s ease infinite;
+    }
+    @keyframes gradientMove {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 10px;
+      background: rgba(0,0,0,0.4);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    nav {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    nav a {
+      color: #f5f5f5;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      border-bottom: 2px solid transparent;
+    }
+
+    nav a:hover {
+      border-bottom: 2px solid #00b4d8;
+    }
+
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      width: 350px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card h2 {
+      text-align: center;
+      color: #90e0ef;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      border-radius: 10px;
+      border: none;
+      padding: 10px;
+      font-family: monospace;
+      resize: none;
+    }
+
+    button {
+      background: #00b4d8;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #0077b6;
+    }
+
+    img.explain {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+      border: 2px solid #90e0ef;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    input[type=text] {
+      width: 90%;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 5px;
+      font-size: 1rem;
+    }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-5xl mx-auto p-6">
-    <header class="mb-4">
-      <h1 class="text-2xl font-bold">Molecular Explorer — Visor 3D</h1>
-      <p class="text-sm text-gray-600">Pega una secuencia de ADN, tradúcela y carga una estructura PDB para verla en 3D. Usa un PDB ID (ej: <span class="mono">1A3N</span>) o sube un archivo <span class="mono">.pdb</span>.</p>
-    </header>
+<body>
+  <header>
+    <h1>🧬 Molecular Explorer</h1>
+    <p>Una herramienta interactiva para analizar secuencias de ADN y proteínas.</p>
+  </header>
 
-    <div class="grid gap-4 md:grid-cols-2">
-      <!-- Left: sequence tools -->
-      <section class="bg-white p-4 rounded shadow-sm">
-        <h2 class="font-semibold">1) Secuencia</h2>
-        <label class="small block mt-2">ADN (p. ej. fragmento del gen de la papa)</label>
-        <textarea id="dnaInput" rows="5" class="w-full p-2 border rounded mono" placeholder="Pega aquí ADN (ATGC)...">ATGGCTGCTTTTCTTCTTCTCTCTGTTGTTGCTGCTGTTGTTGCTGCTGCTGTTGCTGCTGTTGCTTCTGCTTCTGCTGTTGCTGCTGCTGTTGTTGCTGCTGTTGTTGCTTCTGCTGTTGTTGCTGCTGCTTCT</textarea>
+  <nav>
+    <a href="#analisis">Análisis ADN</a>
+    <a href="#busqueda">Buscar secuencias</a>
+    <a href="#info">Acerca de</a>
+  </nav>
 
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button id="formatBtn" class="px-3 py-2 rounded bg-blue-600 text-white small">Formatear</button>
-          <button id="translateBtn" class="px-3 py-2 rounded bg-indigo-600 text-white small">Traducir a proteína</button>
-          <button id="exampleBtn" class="px-3 py-2 rounded bg-green-600 text-white small">Cargar ejemplo Hemoglobina</button>
-        </div>
-
-        <div class="mt-3">
-          <label class="small">Secuencia de aminoácidos (AA)</label>
-          <textarea id="aaOut" rows="4" class="w-full p-2 border rounded mono" readonly></textarea>
-          <div class="mt-2 small text-gray-600">Haz clic en un número de residuo en la secuencia para resaltarlo en la estructura 3D.</div>
-        </div>
-      </section>
-
-      <!-- Right: structure loader -->
-      <section class="bg-white p-4 rounded shadow-sm">
-        <h2 class="font-semibold">2) Cargar estructura 3D</h2>
-
-        <div class="mt-2">
-          <label class="small">PDB ID (RCSB) — ejemplo: <span class="mono">1A3N</span></label>
-          <div class="mt-1 flex gap-2">
-            <input id="pdbId" class="p-1 border rounded mono" placeholder="p.ej. 1A3N" />
-            <button id="loadPdbBtn" class="px-3 py-1 rounded bg-sky-600 text-white small">Cargar PDB</button>
-          </div>
-        </div>
-
-        <div class="mt-3">
-          <label class="small">O sube un archivo PDB local</label>
-          <input id="pdbFile" type="file" accept=".pdb,.cif" class="mt-1"/>
-        </div>
-
-        <div class="mt-3">
-          <label class="small">Representación</label>
-          <div class="mt-1 flex gap-2">
-            <select id="styleSelect" class="p-1 border rounded small">
-              <option value="cartoon">Cartoon</option>
-              <option value="surface">Surface</option>
-              <option value="ball+stick">Ball+Stick</option>
-              <option value="licorice">Licorice</option>
-            </select>
-            <button id="applyStyle" class="px-3 py-1 rounded bg-gray-800 text-white small">Aplicar</button>
-            <button id="resetView" class="px-3 py-1 rounded bg-gray-200 small">Reset</button>
-          </div>
-        </div>
-
-        <div class="mt-3 small text-gray-600">
-          <strong>Tip:</strong> si tu proteína no tiene PDB conocido, puedes buscar el modelo en AlphaFold y descargar el PDB, luego súbelo aquí.
-        </div>
-      </section>
-
-      <!-- Viewer full-width -->
-      <section class="md:col-span-2 bg-white p-4 rounded shadow-sm">
-        <h2 class="font-semibold">Visor 3D</h2>
-        <div id="viewport" class="mt-2"></div>
-
-        <div class="mt-3">
-          <label class="small">Secuencia (clic en residuo):</label>
-          <div id="aaSeq" class="mt-2 mono p-2 border rounded max-h-40 overflow-auto"></div>
-        </div>
-      </section>
+  <main id="analisis">
+    <div class="card">
+      <h2>1️⃣ Generar Reverse Complement</h2>
+      <p>Obtén la secuencia inversa y complementaria del ADN (A↔T, G↔C).</p>
+      <textarea id="seq" placeholder="Escribe tu secuencia aquí..."></textarea>
+      <button onclick="reverseComplement()">Generar</button>
+      <p id="revcomp" style="word-break: break-word;"></p>
+      <img src="https://i.imgur.com/KjMwnrA.png" class="explain" alt="Ejemplo reverse complement">
     </div>
 
-    <footer class="mt-4 text-sm text-gray-500">Hecho para práctica educativa — todo se ejecuta en tu navegador.</footer>
-  </div>
+    <div class="card">
+      <h2>2️⃣ Traducir a Proteína</h2>
+      <p>Convierte tu secuencia de ADN en una secuencia de aminoácidos (usando el código genético estándar).</p>
+      <textarea id="protseq" placeholder="Escribe secuencia de ADN..."></textarea>
+      <button onclick="translateDNA()">Traducir</button>
+      <p id="protein" style="word-break: break-word;"></p>
+      <img src="https://i.imgur.com/UKSK1Wx.png" class="explain" alt="Ejemplo traducción a proteína">
+    </div>
 
-<script>
-  // --- utilidades para secuencia ---
-  const cleanSeq = s => s.toUpperCase().replace(/[^ATGCUNatgcun]/g,'').replace(/U/g,'T');
+    <div class="card">
+      <h2>3️⃣ Calcular GC%</h2>
+      <p>Calcula el porcentaje de bases G y C, útil para determinar estabilidad genética y origen evolutivo.</p>
+      <textarea id="gcseq" placeholder="Escribe secuencia de ADN..."></textarea>
+      <button onclick="calcGC()">Calcular</button>
+      <p id="gccontent"></p>
+      <img src="https://i.imgur.com/0T5ML2C.png" class="explain" alt="Ejemplo cálculo GC%">
+    </div>
 
-  const codonMap = {
-    'TTT':'F','TTC':'F','TTA':'L','TTG':'L','CTT':'L','CTC':'L','CTA':'L','CTG':'L',
-    'ATT':'I','ATC':'I','ATA':'I','ATG':'M','GTT':'V','GTC':'V','GTA':'V','GTG':'V',
-    'TCT':'S','TCC':'S','TCA':'S','TCG':'S','CCT':'P','CCC':'P','CCA':'P','CCG':'P',
-    'ACT':'T','ACC':'T','ACA':'T','ACG':'T','GCT':'A','GCC':'A','GCA':'A','GCG':'A',
-    'TAT':'Y','TAC':'Y','TAA':'*','TAG':'*','CAT':'H','CAC':'H','CAA':'Q','CAG':'Q',
-    'AAT':'N','AAC':'N','AAA':'K','AAG':'K','GAT':'D','GAC':'D','GAA':'E','GAG':'E',
-    'TGT':'C','TGC':'C','TGA':'*','TGG':'W','CGT':'R','CGC':'R','CGA':'R','CGG':'R',
-    'AGT':'S','AGC':'S','AGA':'R','AGG':'R','GGT':'G','GGC':'G','GGA':'G','GGG':'G'
-  };
+    <div class="card" id="busqueda">
+      <h2>4️⃣ Buscar secuencia en NCBI</h2>
+      <p>Busca genes o secuencias reales (usa nombres como “GBSS potato” o “NPR1 Solanum”).</p>
+      <input type="text" id="searchTerm" placeholder="Ejemplo: GBSS Solanum tuberosum" />
+      <button onclick="searchNCBI()">Buscar</button>
+      <div id="searchResults"></div>
+    </div>
+  </main>
 
-  function translateDNA(seq) {
-    const s = cleanSeq(seq);
-    let aa = '';
-    for(let i=0;i+2<s.length;i+=3) {
-      const cod = s.slice(i,i+3);
-      aa += codonMap[cod] || 'X';
+  <footer id="info">
+    <p>Desarrollado por Carlos Flores © 2025 | Proyecto educativo de Biología Molecular.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // --- Función 1: Reverse Complement ---
+    function reverseComplement() {
+      const seq = document.getElementById("seq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      const comp = {A:"T", T:"A", G:"C", C:"G"};
+      const revcomp = seq.split("").reverse().map(b => comp[b] || "").join("");
+      document.getElementById("revcomp").textContent = revcomp || "Secuencia no válida.";
     }
-    return aa;
-  }
 
-  // --- UI elements ---
-  const dnaInput = document.getElementById('dnaInput');
-  const formatBtn = document.getElementById('formatBtn');
-  const translateBtn = document.getElementById('translateBtn');
-  const aaOut = document.getElementById('aaOut');
-  const aaSeqDiv = document.getElementById('aaSeq');
-  const pdbIdInput = document.getElementById('pdbId');
-  const loadPdbBtn = document.getElementById('loadPdbBtn');
-  const pdbFile = document.getElementById('pdbFile');
-  const styleSelect = document.getElementById('styleSelect');
-  const applyStyle = document.getElementById('applyStyle');
-  const resetView = document.getElementById('resetView');
-  const exampleBtn = document.getElementById('exampleBtn');
+    // --- Función 2: Traducción de ADN a proteína ---
+    const codonTable = {
+      TTT:'F', TTC:'F', TTA:'L', TTG:'L',
+      CTT:'L', CTC:'L', CTA:'L', CTG:'L',
+      ATT:'I', ATC:'I', ATA:'I', ATG:'M',
+      GTT:'V', GTC:'V', GTA:'V', GTG:'V',
+      TCT:'S', TCC:'S', TCA:'S', TCG:'S',
+      CCT:'P', CCC:'P', CCA:'P', CCG:'P',
+      ACT:'T', ACC:'T', ACA:'T', ACG:'T',
+      GCT:'A', GCC:'A', GCA:'A', GCG:'A',
+      TAT:'Y', TAC:'Y', TAA:'*', TAG:'*',
+      CAT:'H', CAC:'H', CAA:'Q', CAG:'Q',
+      AAT:'N', AAC:'N', AAA:'K', AAG:'K',
+      GAT:'D', GAC:'D', GAA:'E', GAG:'E',
+      TGT:'C', TGC:'C', TGA:'*', TGG:'W',
+      CGT:'R', CGC:'R', CGA:'R', CGG:'R',
+      AGT:'S', AGC:'S', AGA:'R', AGG:'R',
+      GGT:'G', GGC:'G', GGA:'G', GGG:'G'
+    };
 
-  // --- NGL viewer init ---
-  const stage = new NGL.Stage("viewport");
-  window.addEventListener("resize", ()=> stage.handleResize(), false);
-
-  let currentComponent = null;
-
-  async function loadPdbFromId(pdbId) {
-    if(!pdbId) return alert('Ingresa un PDB ID');
-    const id = pdbId.trim();
-    const url = `https://files.rcsb.org/download/${id.toUpperCase()}.pdb`;
-    try {
-      await stage.removeAllComponents();
-      currentComponent = await stage.loadFile(url, { defaultRepresentation: true });
-      // aplicar estilo por defecto cartoon
-      stage.autoView();
-      applyRepresentation(styleSelect.value);
-      currentComponent.centerView();
-    } catch (e) {
-      alert('Error cargando PDB: ' + e.message);
-    }
-  }
-
-  function applyRepresentation(style) {
-    if(!currentComponent) return;
-    currentComponent.removeAllRepresentations();
-    if(style === 'cartoon') currentComponent.addRepresentation('cartoon', { color: 'chain' });
-    else if(style === 'surface') currentComponent.addRepresentation('surface', { opacity: 0.9 });
-    else if(style === 'ball+stick') currentComponent.addRepresentation('ball+stick', {});
-    else if(style === 'licorice') currentComponent.addRepresentation('licorice', {});
-    stage.autoView();
-  }
-
-  // Load PDB file from local upload
-  pdbFile.addEventListener('change', async (ev) => {
-    const f = ev.target.files[0];
-    if(!f) return;
-    const blobUrl = URL.createObjectURL(f);
-    try {
-      await stage.removeAllComponents();
-      currentComponent = await stage.loadFile(blobUrl, { defaultRepresentation: true });
-      applyRepresentation(styleSelect.value);
-      stage.autoView();
-    } catch(err){ alert('Error leyendo archivo: ' + err.message); }
-  });
-
-  loadPdbBtn.addEventListener('click', ()=> loadPdbFromId(pdbIdInput.value));
-
-  applyStyle.addEventListener('click', ()=> applyRepresentation(styleSelect.value));
-  resetView.addEventListener('click', ()=> stage.autoView());
-
-  // --- sequence interactivity: show AA sequence and clickable residues ---
-  function renderAASequence(aaSeq) {
-    aaSeqDiv.innerHTML = '';
-    if(!aaSeq) { aaSeqDiv.textContent = '(vacía)'; return; }
-    // render: each residue with a span and index (1-based)
-    for(let i=0;i<aaSeq.length;i++) {
-      const span = document.createElement('span');
-      span.className = 'mono';
-      span.style.cursor = 'pointer';
-      span.style.padding = '2px';
-      span.style.marginRight = '2px';
-      span.dataset.residue = (i+1);
-      span.title = `Residuo ${i+1}`;
-      span.textContent = `${aaSeq[i]}${i+1}`;
-      span.addEventListener('click', ()=> highlightResidue(i+1));
-      aaSeqDiv.appendChild(span);
-      if((i+1)%10===0) aaSeqDiv.appendChild(document.createElement('br'));
-    }
-  }
-
-  // highlight residue in structure (by residue number)
-  function highlightResidue(resNum) {
-    if(!currentComponent) { alert('Carga antes una estructura PDB para resaltar'); return; }
-    // remove old selection representations first
-    currentComponent.removeRepresentations({ _type: 'selection' }); // best-effort
-    // create selection string for residue number (works for many PDBs with single chain)
-    const sel = `:${resNum}`; // selects residue number across chains; if chain-specific needed, user must adapt
-    try {
-      currentComponent.addRepresentation('spacefill', {sele: sel, scale: 1.1, color: 'element'}); // highlight
-      // also center on selection
-      stage.autoView(sel);
-    } catch(e) {
-      // fallback: attempt atom-level selection by residue number
-      try {
-        currentComponent.addRepresentation('spacefill', { sele: `resid ${resNum}`, scale: 1.1 });
-        stage.autoView(`resid ${resNum}`);
-      } catch(err) {
-        alert('No se pudo resaltar el residuo en esta estructura. Selección no compatible con PDB cargado.');
+    function translateDNA() {
+      const seq = document.getElementById("protseq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      let protein = "";
+      for (let i = 0; i < seq.length - 2; i += 3) {
+        let codon = seq.substring(i, i + 3);
+        protein += codonTable[codon] || "";
       }
+      // Mejorar visualmente: eliminar codones incompletos
+      document.getElementById("protein").textContent = protein || "Secuencia no válida.";
     }
-  }
 
-  // format & translate buttons
-  formatBtn.addEventListener('click', ()=> {
-    dnaInput.value = cleanSeq(dnaInput.value);
-  });
+    // --- Función 3: Calcular contenido GC ---
+    function calcGC() {
+      const seq = document.getElementById("gcseq").value.toUpperCase().replace(/[^ATCG]/g, "");
+      if (seq.length === 0) {
+        document.getElementById("gccontent").textContent = "Por favor ingresa una secuencia válida.";
+        return;
+      }
+      const gcCount = (seq.match(/[GC]/g) || []).length;
+      const gcPercent = ((gcCount / seq.length) * 100).toFixed(2);
+      document.getElementById("gccontent").textContent = `Contenido GC: ${gcPercent}%`;
+    }
 
-  translateBtn.addEventListener('click', ()=> {
-    const aa = translateDNA(dnaInput.value);
-    aaOut.value = aa;
-    renderAASequence(aa);
-  });
-
-  // ejemplo hemoglobina (PDB 1A3N) y secuencia de hemoglobina humana (breve)
-  exampleBtn.addEventListener('click', async ()=> {
-    // ejemplo de cadena corta de hemoglobina (alpha fragment) para demostración
-    const exampleAA = "MVLSPADKTNVKAAWGKVG"; // fragmento ilustrativo
-    aaOut.value = exampleAA;
-    renderAASequence(exampleAA);
-    pdbIdInput.value = "1A3N";
-    await loadPdbFromId("1A3N");
-  });
-
-  // On load: try to auto-translate initial content
-  document.addEventListener('DOMContentLoaded', ()=> {
-    const initialAA = translateDNA(dnaInput.value);
-    aaOut.value = initialAA;
-    renderAASequence(initialAA);
-  });
-</script>
+    // --- Función 4: Buscar secuencias reales (enlace a NCBI) ---
+    function searchNCBI() {
+      const term = document.getElementById("searchTerm").value.trim();
+      if (!term) {
+        document.getElementById("searchResults").innerHTML = "<p>Ingresa un nombre de gen o especie.</p>";
+        return;
+      }
+      const url = `https://www.ncbi.nlm.nih.gov/search/all/?term=${encodeURIComponent(term)}`;
+      document.getElementById("searchResults").innerHTML = `<p>Buscar en NCBI: <a href="${url}" target="_blank">${url}</a></p>`;
+    }
+  </script>
 </body>
 </html>
